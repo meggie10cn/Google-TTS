@@ -1,0 +1,380 @@
+/*************************************************************************
+ *  Compilation:  javac -classpath .:jl1.0.jar MP3.java         (Linux)
+ *                javac -classpath .;jl1.0.jar MP3.java         (Windows)
+ *  Execution:    java -classpath .:jl1.0.jar MP3               (Linux)
+ *                java -classpath .;jl1.0.jar MP3               (Windows)
+ *
+ *  The MP3.java program:
+ *     (1) Uses Google Translate TTS (text to speech) to convert text to an MP3 audio file
+ *
+ *			http://translate.google.com/translate_tts?q=hello&tl=en&total=1&idx=0&textlen=11
+ *
+ *			Breaking down the parameters,
+ *			   “q” is the text to convert to audio
+ *			   “tl” is the text language
+ *  						ar	Arabic
+ *							hy	Armenian
+ *							az	Azerbaijani
+ *							eu	Basque
+ *							be	Belarusian
+ *							bn	Bengali
+ *							bh	Bihari
+ *							bs	Bosnian
+ *							br	Breton
+ *							bg	Bulgarian
+ *							km	Cambodian
+ *							ca	Catalan
+ *							zh-CN	Chinese (Simplified)
+ *							zh-TW	Chinese (Traditional)
+ *							co	Corsican
+ *							hr	Croatian
+ *							cs	Czech
+ *							da	Danish
+ *							nl	Dutch
+ *							en	English
+ *							eo	Esperanto
+ *							et	Estonian
+ *							fo	Faroese
+ *							tl	Filipino
+ *							fi	Finnish
+ *							fr	French
+ *							fy	Frisian
+ *							gl	Galician
+ *							ka	Georgian
+ *							de	German
+ *							el	Greek
+ *                          ...
+ *			   “total” is the total number of chunks (chunk max size = 100)
+ *			   “idx” is which chunk we’re on
+ *			   “textlen” is the length of the text in that chunk; The Google Translate site itself gets around its own
+ *                        character limit by breaking big blocks of text into “chunks”.
+ *
+ *
+ *    (2) Plays the MP3 file using the JLayer MP3 library:
+ *             http://www.javazoom.net/javalayer/sources.html
+ *
+ *************************************************************************/
+ // @file MP3DOM.java
+ // @author lixia zhao
+ // @ date: 3/2/2015
+ // @ convert the DOM parsed texts in English, chinese,Japanese & French into audio
+import java.net.*;
+import java.io.*;
+import javazoom.jl.player.Player;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.w3c.dom.*;
+import org.xml.sax.SAXException;
+import org.apache.xerces.parsers.*;
+
+
+class MP3DOM {
+	// the javazoom player
+	static Player player;
+
+	// this is where the audio file is saved
+//	static String filename1 = "sentence.mp3";
+   // English text
+   static String strEn;
+   //Chinese Text
+   static String strCn;
+   //Japanese Text
+   static String strJa;
+   //French Text
+   static String strFr;
+   
+	public static void main(String[] args) 
+   {
+		parseText ();
+      TTS (strEn,"en", "English");
+      TTS(strCn, "zh-CN","Chinese");
+      TTS(strJa,"ja", "Japanese");
+      TTS(strFr,"fr", "French");
+      play("English.mp3");
+   //  play("Chinese.mp3");
+    // play("Japanese.mp3");
+    // play("French.mp3");
+      
+   }
+      
+      private static void makeMP3 (String destination, String language, List<String> pieces)
+      {
+      
+         try
+         {
+             //contact Google TTS service and creat a URLConnect
+               byte[] buffer = new byte[1024];
+               OutputStream outstream = new FileOutputStream(new File(destination + ".mp3"));
+               
+               boolean appendToFile = true; 
+               
+               InputStream audioSrc = null;
+               for (String piece: pieces)
+               {
+                  piece = URLEncoder.encode(piece, "UTF-8");
+                  URL myURL = new URL("http://www.translate.google.com/translate_tts?ie=utf-8&tl="+ language + "&q=" + piece);
+                  HttpURLConnection urlConn = (HttpURLConnection) myURL.openConnection();
+                  urlConn.setRequestProperty("User-Agent", "Mozilla");
+                  urlConn.connect();
+                  
+                  audioSrc = urlConn.getInputStream();
+                  DataInputStream read = new DataInputStream(audioSrc);
+                  
+                  int len;
+                  while ((len = read.read(buffer)) > 0)
+                  {
+                      outstream.write(buffer,0,len);
+                      outstream.flush();
+                  }
+                  // close the input stream
+                  audioSrc.close();
+                  if(appendToFile)
+                  {
+                     outstream = new FileOutputStream(new File(destination + ".mp3"), true);
+                     appendToFile = false;
+                  }
+               }
+                //close the input and output stream
+                 audioSrc.close();
+                 outstream.close();
+		} //end try
+      catch(Exception e)
+      {
+			   System.out.println(e.getMessage());
+	   }
+    } 
+
+    // Takes in strings of texts in different languages, converts them to URL parameter
+     // replace all the spaces in sentence with "+"
+     // separate them into a ArrayList of Strings with each string in the list with max
+     // 100 characters
+    private static ArrayList<String> getText (String text)
+    {
+         int startInd = 0;
+         ArrayList<String> finalText = new ArrayList<String>();
+         while (startInd < text.length()-1)
+         {
+            int endPieceInd = getPieceEnd(text,startInd);// call getPieceEnd();
+            String piece =text.substring(startInd,endPieceInd);
+            if (piece.length() >= 2)
+            {  
+            // if first character starts with white space, remove it
+              if (piece.substring(0,1).equals(" "))
+              {
+                  piece = piece.substring(1);
+              }
+           }
+           
+           finalText.add(piece);
+           startInd = endPieceInd;
+       }
+       
+       return finalText;
+   }
+   
+   private static int getPieceEnd(String text, int startIndex)
+   {
+      String subtext= (text.substring(startIndex).length()>100)?
+                       text.substring(startIndex, startIndex + 100):
+                       text.substring(startIndex);
+     int end = subtext.length();
+     if (text.substring(startIndex).length() > 100)
+     { 
+        // if the last character is not " ", remove the last character to avoid
+        // breaking down in the middle of a word
+        while(!subtext.substring(subtext.length()-1, subtext.length()).equals(" "))
+        {
+            subtext = subtext.substring(0,subtext.length()-1);
+            end--;
+        }
+        subtext = subtext.substring(0,subtext.length()-1);
+        end--;
+     }
+     return end+startIndex;
+   }
+      
+   // send the texts to speech
+    public static void TTS (String text, String language, String outputName)
+    {
+         ArrayList<String> finalText = getText(text);
+         
+        // for (String piece:finalText)
+        //    System.out.println(piece);
+            
+         makeMP3(outputName,language,finalText);
+     }
+         
+        
+    // play the MP3 file to the sound card
+    public static void play(String filename) {
+
+        try {
+            FileInputStream fis     = new FileInputStream(filename);
+            BufferedInputStream bis = new BufferedInputStream(fis);
+            player = new Player(bis);
+        }
+        catch (Exception e) {
+            System.out.println("Problem playing file " + filename);
+            System.out.println(e);
+        }
+
+        // run in new thread to play in background
+        new Thread() {
+            public void run() {
+                try { player.play(); }
+                catch (Exception e) { System.out.println(e); }
+            }
+        }.start();
+    }
+   
+    
+    public static void parseText ()
+    {
+     
+       try
+      {
+      
+      //*** create a new instance of a parser
+         DOMParser p = new DOMParser();
+
+      //*** tell parser what file to parse
+      //p.parse("file:"+args[0]);
+         p.parse("audio.xml");
+   
+      //*** return the parsed xml file as a DOM Document
+      //*** object
+         Document doc = p.getDocument();
+
+      //*** figure out the root element
+         Element rootElement = doc.getDocumentElement(); //collection
+         System.out.println("The root: " + rootElement.getTagName());
+      
+      //*** get the name of attribute of the rootElement
+         NamedNodeMap rootAttr = rootElement.getAttributes();
+         for (int b = 0; b<rootAttr.getLength(); b++)
+         {
+            System.out.println("root attribute name:" + rootAttr.item(b).getNodeName());
+            System.out.println("root attribute value:" + rootAttr.item(b).getNodeValue());
+            strEn = "This is my " + rootAttr.item(b).getNodeValue()+ " Hope you enjoy it. After this audio, please "
+                    + "click Chinese.mp3, or Japanese.mp3 or Fench.mp3 to listent to poems in different languages";
+         }
+      
+         System.out.println("========================================");
+
+      //*** navigate down the tree to get the children of root element
+         NodeList rootChildren = rootElement.getChildNodes(); //audio_piece nodelist
+      
+         Node childNode;
+         NamedNodeMap childAttr;
+      
+       //*** get each node
+    	   for (int i = 0; i < rootChildren.getLength(); i++)
+         {
+       
+    		   childNode = rootChildren.item(i);
+          //*** check if childNode is an element and has childNodes
+          //*** get attribute names and values
+            if((childNode instanceof Element)&&(childNode.hasChildNodes()))
+            {
+               System.out.println("the name of the childNode is: "+ childNode.getNodeName());
+               childAttr = childNode.getAttributes();
+         
+               System.out.println("=>Num attributes: "+ childAttr.getLength());
+               for (int j =0; j<childAttr.getLength(); j++)
+               {
+                  System.out.println("=>Att name: "+childAttr.item(j).getNodeName()+"; value: " + 
+                                childAttr.item(j).getNodeValue());
+               }
+                  if (childAttr.getNamedItem("language").getNodeValue().equals("en"))
+                     strEn += "This is the English version of "+ childAttr.getNamedItem("title").getNodeValue()
+                     + " by " + childAttr.getNamedItem("author").getNodeValue();
+                  else if (childAttr.getNamedItem("language").getNodeValue().equals("zh-CN"))
+                     strCn ="这是中文版本：" + childAttr.getNamedItem("title").getNodeValue()+
+                     " 作者：" + childAttr.getNamedItem("author").getNodeValue()+ " 译者：" + 
+                      childAttr.getNamedItem("translator").getNodeValue();
+                  else if (childAttr.getNamedItem("language").getNodeValue().equals("ja"))
+                     strJa = "和訳 " + childAttr.getNamedItem("title").getNodeValue() +  
+                     " 著者: " + childAttr.getNamedItem("author").getNodeValue() + " 翻訳: " +
+                     childAttr.getNamedItem("translator").getNodeValue();
+                  else if (childAttr.getNamedItem("language").getNodeValue().equals("fr"))
+                     strFr = "Poème français " + childAttr.getNamedItem("title").getNodeValue() + " de " +
+                     childAttr.getNamedItem("author").getNodeValue() + " jouir!" ;                 
+            
+              
+      //*** navigate down the children of childNode and their attributes
+    
+                  NodeList rootGrandchildren = childNode.getChildNodes();
+                  Node rootGrandchild;
+      //***  get each rootGrandChild
+                  for (int j = 0;j < rootGrandchildren.getLength();j++)
+                  {
+                     rootGrandchild = rootGrandchildren.item(j);
+                 
+                  // check if childNode is an element and has childNodes
+                     if ((rootGrandchild instanceof Element)
+                        &&(rootGrandchild.hasChildNodes())) 
+                     {
+                        System.out.println("==>the name of the rootGrandchild is: "
+                                  + rootGrandchild.getNodeName()); 
+                        NamedNodeMap grandAttr = rootGrandchild.getAttributes();
+                        for (int a =0; a<grandAttr.getLength();a++)
+                        {
+                           System.out.println("==>att name:" +grandAttr.item(a).getNodeName());
+                           System.out.println("==>att value:" +grandAttr.item(a).getNodeValue()); 
+                        //String 
+                        }
+                        System.out.println();
+   
+                  //*** navigate down the text and value of the text 
+                        NodeList texts = rootGrandchild.getChildNodes();
+                        Node text_P;
+                 //***  get each text_name
+                    
+                        for (int k=0;k<texts.getLength();k++) 
+                        {
+                           text_P = texts.item(k);
+                           if (childNode.getAttributes().getNamedItem("language").getNodeValue().equals("en"))
+                           {
+                              System.out.println(text_P.getNodeValue());
+                              strEn += text_P.getNodeValue();
+                             // System.out.println(strEn);
+                           }
+                           else if (childAttr.getNamedItem("language").getNodeValue().equals("zh-CN"))
+                          {
+                             System.out.println(text_P.getNodeValue());
+                             strCn +=text_P.getNodeValue();
+                           
+                          }
+                           else if (childAttr.getNamedItem("language").getNodeValue().equals("ja"))
+                          {
+                             System.out.println(text_P.getNodeValue());
+                             strJa +=text_P.getNodeValue();
+                          }
+                           else if (childAttr.getNamedItem("language").getNodeValue().equals("fr"))
+                          {
+                             System.out.println(text_P.getNodeValue());
+                             strFr +=text_P.getNodeValue();
+                          }
+                         
+                        }  //End for with index k
+                    }// End if 
+               } // End for with index j
+             }   // End if
+          } // end  for with index i
+      
+    } // end try
+   
+    catch(Exception e)
+    {
+      e.printStackTrace();
+    }
+ 
+  }// End main
+  
+
+
+}
