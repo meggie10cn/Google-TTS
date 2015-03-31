@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<collection name= "assignment two">
+    <audio_piece title="She Walks in Beauty" author="Lord Byron" language="en">  
+        <text chunk="1">   
+            She walks in beauty, 
+            like the night Of cloudless climes and starry skies;
+            And all that’s best of dark and bright
+            Meet in her aspect and her eyes;
+            Thus mellowed to that tender light
+            Which heaven to gaudy day denies.  
+        </text>
+        <text chunk="2">
+            One shade the more, one ray the less,
+            Had half impair'd the nameless grace   
+            Which waves in every raven tress 
+            Or softly lightens o'er her face;   
+            Where thoughts serenely sweet express   
+            How pure, how dear their dwelling-place.
+        </text>
+    </audio_piece>
+    <audio_piece title= "她走在美的光彩中" author="拜伦" translator="查良铮" language="zh-CN">
+        <text chunk="1">
+            她走在美的光彩中，
+            象夜晚
+            皎洁无云而且繁星漫天；
+            明与暗的最美妙的色泽
+            在她的仪容和秋波里呈现：
+            耀目的白天只嫌光太强，
+            它比那光亮柔和而幽暗。 
+        </text>
+        <text chunk="2">
+            增加或减少一份明与暗
+            就会损害这难言的美。
+            美波动在她乌黑的发上，
+            或者散布淡淡的光辉
+            在那脸庞，恬静的思绪
+            指明它的来处纯洁而珍贵。    
+        </text>
+    </audio_piece> 
+    <audio_piece title= "かのひとは、美わしく行く" author="バイロンの" translator=" 阿部 知二" language="ja">
+        <text chunk="1">
+            かのひとは、美わしく行く
+            雲影もなき国の、きらめける
+            星空の、夜のごとくに
+            ぬばたまの、黒きもの、輝けるもの
+            よきものは、ことごとく
+            かのひとの、姿と瞳にこそあれ
+            ま昼間の、まぶしさに、神の惜しみし
+            あわれなる、夜の光に
+            やわらかに、融けてこそあれ。
+       </text>
+       <text chunk="2">
+            いましばし暗かりせば、いましばし明るかりせば
+            鳥羽玉の黒髪に、浪うちて
+            かのひとの、面のうえに
+            やわらけくほのめける
+            いい方もなき、美しきものの影
+            傷つきて、消えにしものを
+            静けくも、あまき想いは
+            清らかに、慕わしく
+            その面に、かがやき出ずる。   
+       </text>
+    </audio_piece>    
+    <audio_piece title="Le Lac" author="Lamartine" language="fr">
+      <text chunk="1">
+           Ainsi, toujours poussés vers de nouveaux rivages,
+           dans la nuit éternelle emportés sans retour,
+           ne pourrons-nous jamais sur l'océan des âges
+           jeter l'ancre un seul jour?
+      </text>
+    </audio_piece>    
+    
+</collection>
